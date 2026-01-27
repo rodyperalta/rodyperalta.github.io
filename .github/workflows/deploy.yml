@@ -1,21 +1,35 @@
-name: Deploy Static Site
-on: [push]
+name: CI/CD Static Site
+
+on:
+  push:
+    branches:
+      - main
 
 jobs:
-  deploy:
+  build-test-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      
-      # Solo valida y muestra info
-      - name: Validate and Info
+      # 1. Descargar el código
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      # 2. BUILD
+      - name: Build
         run: |
-          echo "✅ Validación exitosa"
-          echo ""
-          echo "🔗 Para habilitar GitHub Pages:"
-          echo "1. Ve a: https://github.com/${{ github.repository }}/settings/pages"
-          echo "2. En 'Source', selecciona 'main' y '/ (root)'"
-          echo "3. Click Save"
-          echo ""
-          echo "🌍 Tu sitio será:"
-          echo "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+          echo "🔨 Build del sitio estático"
+          ls -la
+
+      # 3. TEST
+      - name: Test
+        run: |
+          echo "🧪 Validando archivos"
+          test -f index.html
+          echo "Pruebas correctas"
+
+      # 4. DEPLOY
+      - name: Deploy a GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
