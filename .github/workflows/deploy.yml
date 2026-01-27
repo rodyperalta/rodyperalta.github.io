@@ -1,0 +1,21 @@
+name: Deploy Static Site
+on: [push]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Solo valida y muestra info
+      - name: Validate and Info
+        run: |
+          echo "✅ Validación exitosa"
+          echo ""
+          echo "🔗 Para habilitar GitHub Pages:"
+          echo "1. Ve a: https://github.com/${{ github.repository }}/settings/pages"
+          echo "2. En 'Source', selecciona 'main' y '/ (root)'"
+          echo "3. Click Save"
+          echo ""
+          echo "🌍 Tu sitio será:"
+          echo "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"

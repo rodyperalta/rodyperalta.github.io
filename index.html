@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda Tech - Práctica Payphone</title>
+    <style>
+        * { box-sizing: border-box; font-family: sans-serif; margin: 0; padding: 0; }
+        body { background: #f5f5f5; color: #333; line-height: 1.6; }
+        header, footer { background: #232f3e; color: white; text-align: center; padding: 1.5rem; }
+        main { padding: 2rem; max-width: 1200px; margin: auto; }
+        .productos { display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; margin: 2rem 0; }
+        .producto { background: white; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 1.5rem; text-align: center; width: 300px; }
+        .producto img { max-width: 100%; height: 180px; object-fit: cover; border-radius: 4px; margin-bottom: 1rem; }
+        .producto h3 { margin: 0.5rem 0; color: #b12704; }
+        .producto button { background-color: #ff9900; color: #232f3e; border: none; padding: 0.8rem 1.5rem; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 1rem; width: 100%; }
+        #modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal-contenido { background-color: white; margin: 10% auto; padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; text-align: center; }
+        .opcion-pago { display: block; margin: 1rem auto; padding: 1rem; background: #232f3e; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        .opcion-pago:hover { background: #ff9900; color: #232f3e; }
+        .cerrar { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <header><h1>🛒 Tienda Tech - Práctica 8vo Semestre</h1></header>
+    <main>
+        <h2>Productos Destacados</h2>
+        <div class="productos">
+            <div class="producto" data-name="Cascos Gamer Pro" data-price="5999">
+                <img src="https://images.unsplash.com/photo-1585298723682-7115561c51b7?auto=format&fit=crop&w=600" alt="Cascos Gamer">
+                <h3>Cascos Gamer Pro</h3>
+                <p>Precio: <strong>$59.99</strong></p>
+                <button onclick="iniciarPago(this)">Pagar Ahora</button>
+            </div>
+            <div class="producto" data-name="Teclado Mecánico RGB" data-price="8999">
+                <img src="https://images.unsplash.com/photo-1541140532154-b024d705b90a?auto=format&fit=crop&w=600" alt="Teclado">
+                <h3>Teclado Mecánico RGB</h3>
+                <p>Precio: <strong>$89.99</strong></p>
+                <button onclick="iniciarPago(this)">Pagar Ahora</button>
+            </div>
+            <div class="producto" data-name="Mouse Ergonómico" data-price="3450">
+                <img src="https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=600" alt="Mouse">
+                <h3>Mouse Inalámbrico</h3>
+                <p>Precio: <strong>$34.50</strong></p>
+                <button onclick="iniciarPago(this)">Pagar Ahora</button>
+            </div>
+        </div>
+        <!-- Modal para mostrar opciones de pago -->
+        <div id="modal">
+            <div class="modal-contenido">
+                <span class="cerrar" onclick="cerrarModal()">&times;</span>
+                <h3>Selecciona tu método de pago</h3>
+                <p>Producto: <strong id="modal-producto"></strong></p>
+                <a id="link-payphone" class="opcion-pago" target="_blank">📱 Pagar con App PayPhone</a>
+                <a id="link-tarjeta" class="opcion-pago" target="_blank">💳 Pagar con Tarjeta (Visa/MasterCard)</a>
+                <p><small>Serás redirigido a la pasarela segura de Payphone.</small></p>
+            </div>
+        </div>
+    </main>
+    <footer><p>&copy; 2025 Estudiante de TI Peralta Rivas - Práctica Payphone</p></footer>
+
+    <script>
+        const CONFIG = {
+            TOKEN: 'GnE-DcDSoXj977cYxPYT2hHtd6HntnlayouD8rj5DHVXrr8Q3GweH0LnXfIx2EjGVInLVO-SiyCfQcXxWd90aadsvPgAkYMZwh_CE4pOzpE6dw_j4qb-9IKcjbl-oyzYsF4p4LYrLd6pCwDNBciaOv-NmERAyDqQaaorjtraWsiXzbSPgNMVCpeJrtl1j8m5xasZ8uQpI81mS4AhOoXCSyKHohoGcWwzGTaDnIp9R6E5xiQ4zhZzIg--pFG3W4Yn5yNuDseQSVaBPzz6Ed9GrmwgyIAthGcuYcHr5UjOCMahYwVDoEs51-JXhlZCkRAFDH5pDg', // Reemplázalo
+            STORE_ID: '1c1b0d21-9040-482a-8d35-7e5b09095c7b', // Reemplázalo
+            RESPONSE_URL: 'https://rodyperalta.github.io/payphonedeploy/confirmacion.html' // Ajusta el puerto si es diferente
+        };
+
+        let transaccionActual = {};
+
+        async function iniciarPago(boton) {
+            const producto = boton.parentElement;
+            const nombre = producto.dataset.name;
+            const precioCentavos = parseInt(producto.dataset.price);
+
+            transaccionActual = {
+                nombre: nombre,
+                clientTransactionId: 'TXN_' + Date.now() + '_' + Math.floor(Math.random() * 1000)
+            };
+
+            const bodyJSON = {
+                "amount": precioCentavos,
+                "amountWithoutTax": precioCentavos,
+                "amountWithTax": 0,
+                "tax": 0,
+                "reference": `Compra: ${nombre}`,
+                "currency": "USD",
+                "clientTransactionId": transaccionActual.clientTransactionId,
+                "storeId": CONFIG.STORE_ID,
+                "responseUrl": CONFIG.RESPONSE_URL
+            };
+
+            try {
+                const respuesta = await fetch('https://pay.payphonetodoesposible.com/api/button/Prepare', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${CONFIG.TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bodyJSON)
+                });
+
+                const data = await respuesta.json();
+                console.log("Respuesta de Prepare:", data);
+
+                if (data.payWithPayPhone && data.payWithCard) {
+                    // Mostrar modal con las dos opciones
+                    document.getElementById('modal-producto').textContent = nombre;
+                    document.getElementById('link-payphone').href = data.payWithPayPhone;
+                    document.getElementById('link-tarjeta').href = data.payWithCard;
+                    document.getElementById('modal').style.display = 'block';
+                } else {
+                    alert('Error: ' + (data.message || 'No se recibieron URLs de pago'));
+                }
+            } catch (error) {
+                alert('Error de conexión: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
