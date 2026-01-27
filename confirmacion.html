@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación de Pago</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 600px; margin: auto; }
+        .success { background: #d4edda; color: #155724; padding: 20px; border-radius: 5px; margin: 20px 0; }
+        .error { background: #f8d7da; color: #721c24; padding: 20px; border-radius: 5px; margin: 20px 0; }
+        .loading { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Confirmación de Pago</h1>
+        <div id="resultado" class="loading">Verificando estado de la transacción...</div>
+        <p><a href="https://rodyperalta.github.io/">← Volver a la tienda</a></p>
+    </div>
+
+    <script>
+        const CONFIG = {
+            TOKEN: 'GnE-DcDSoXj977cYxPYT2hHtd6HntnlayouD8rj5DHVXrr8Q3GweH0LnXfIx2EjGVInLVO-SiyCfQcXxWd90aadsvPgAkYMZwh_CE4pOzpE6dw_j4qb-9IKcjbl-oyzYsF4p4LYrLd6pCwDNBciaOv-NmERAyDqQaaorjtraWsiXzbSPgNMVCpeJrtl1j8m5xasZ8uQpI81mS4AhOoXCSyKHohoGcWwzGTaDnIp9R6E5xiQ4zhZzIg--pFG3W4Yn5yNuDseQSVaBPzz6Ed9GrmwgyIAthGcuYcHr5UjOCMahYwVDoEs51-JXhlZCkRAFDH5pDg' // MISMO token que en index.html
+        };
+
+        // Función para obtener parámetros de la URL (igual que en la documentación)
+        function getQueryVariable(variable) {
+            const query = window.location.search.substring(1);
+            const vars = query.split('&');
+            for (let i = 0; i < vars.length; i++) {
+                const pair = vars[i].split('=');
+                if (pair[0] === variable) {
+                    return decodeURIComponent(pair[1]);
+                }
+            }
+            return '';
+        }
+
+        async function confirmarPago() {
+            const id = getQueryVariable('id');
+            const clientTxId = getQueryVariable('clientTransactionId');
+
+            if (!id || !clientTxId) {
+                mostrarResultado('No se recibieron parámetros válidos de confirmación.', 'error');
+                return;
+            }
+
+            const bodyJSON = {
+                "id": parseInt(id),
+                "clientTxId": clientTxId
+            };
+
+            try {
+                const respuesta = await fetch('https://pay.payphonetodoesposible.com/api/button/V2/Confirm', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${CONFIG.TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bodyJSON)
+                });
+
+                const data = await respuesta.json();
+                console.log("Respuesta de Confirm:", data);
+
+                // Interpretar respuesta según documentación
+                if (data.statusCode === 3) { // Aprobado
+                    mostrarResultado(`
+                        ✅ <strong>¡PAGO EXITOSO!</strong><br><br>
+                        <strong>Producto:</strong> ${data.reference}<br>
+                        <strong>Monto:</strong> $${(data.amount / 100).toFixed(2)}<br>
+                        <strong>Código de Autorización:</strong> ${data.authorizationCode}<br>
+                        <strong>ID Transacción Payphone:</strong> ${data.clientTransactionId}
+                    `, 'success');
+                } else if (data.statusCode === 2) { // Cancelado
+                    mostrarResultado('❌ <strong>PAGO CANCELADO</strong><br>El usuario canceló la transacción.', 'error');
+                } else {
+                    mostrarResultado(`⚠️ <strong>ESTADO INESPERADO:</strong> ${data.message}`, 'error');
+                }
+            } catch (error) {
+                mostrarResultado('Error al conectar con el servidor de confirmación.', 'error');
+                console.error(error);
+            }
+        }
+
+        function mostrarResultado(mensaje, tipo) {
+            const div = document.getElementById('resultado');
+            div.innerHTML = mensaje;
+            div.className = tipo;
+        }
+
+        // Ejecutar al cargar la página
+        document.addEventListener('DOMContentLoaded', confirmarPago);
+    </script>
+</body>
+</html>
