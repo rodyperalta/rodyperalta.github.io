@@ -54,7 +54,7 @@ jobs:
   # ETAPA 3: DEPLOY - Solo se ejecuta si build (y test) tienen éxito
   deploy:
     runs-on: ubuntu-latest
-    needs: build # Cambia a 'needs: test' si usas la etapa test
+    needs: test # Cambia a 'needs: test' si usas la etapa test
     steps:
       - name: 🚀 Desplegar en GitHub Pages
         uses: actions/deploy-pages@v4
