@@ -78,6 +78,4 @@ jobs:
       - name: 🚀 Desplegar en GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        env:
-          PAYPHONE_API_TOKEN: ${{ secrets.PAYPHONE_API_TOKEN }}
-          PAYPHONE_CONFIRM_API_TOKEN: ${{secrets.PAYPHONE_CONFIRM_API_TOKEN}}
+        
