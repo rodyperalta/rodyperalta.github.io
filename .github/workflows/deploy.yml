@@ -40,8 +40,6 @@ jobs:
       - name: Inyectar token de Payphone (Secret de Entorno)
         run: |
           echo "Reemplazando marcador por el token seguro..."
-          # Este comando busca 'PAYPHONE_TOKEN_PLACEHOLDER' en index.html
-          # y lo reemplaza con el valor del secreto PAYPHONE_API_TOKEN.
           sed -i "s|PAYPHONE_TOKEN_PLACEHOLDER|$PAYPHONE_API_TOKEN|g" index.html
           echo "✅ Token inyectado de forma segura."
           sed -i "s|PAYPHONE_TOKEN_PLACEHOLDER|$PAYPHONE_API_TOKEN|g" confirmacion.html
